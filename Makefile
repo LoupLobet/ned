@@ -6,8 +6,9 @@ LDFLAGS=-lncurses
 PROG=ned
 OBJS=\
 	util.o\
-	buf.o\
+	buffer.o\
 	rune.o\
+	file.o\
 	main.o
 
 all: clean $(PROG)

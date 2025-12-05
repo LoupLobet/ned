@@ -5,6 +5,8 @@
 #define BUFFER_INIT_SIZE 32
 
 typedef struct Buffer Buffer;
+typedef struct File File;
+typedef struct Line Line;
 typedef struct Screen Screen;
 typedef struct Prompt Prompt;
 typedef struct Text Text;
@@ -38,22 +40,49 @@ int  buf_moveruneforwardnr(Buffer *, int, Rune);
 int	 buf_resize(Buffer *);
 char	*buf_tostr(Buffer *);
 
+struct File {
+	Buffer *buf;
+	Line *lines;
+	Line *lastline;
+	char *name;	
+};
+
+void  file_free(File *);
+File *file_openfile(char *, char *);
+
+struct Line {
+	vlong len;
+	vlong cap;
+	char *bytes;
+	Line *next;	
+	Line *prev;	
+};
+
+Line *line_appendc(Line *, char);
+Line *line_create(void);
+void line_free(Line *);
+void line_freeall(Line *);
+
 struct Screen {
 	int h, w;
-	Text *text;
-	Text *prompt;
+	Text *txt;
 };
 
 Screen *screen_create(void) ;
 void screen_free(Screen *) ;
+int screen_rendertext(Screen *);
 
 struct Text{
-	int cursy, cursx;
-	int y, x;
-	int h, w;
-	int addrfrom;
+	Line *buflinefrom;
+	Line *buflineto;
 	Buffer *buf;
+	int cursy, cursx;
+	File *file;
+	int h, w;
+	int y, x;
 };
 
 Text *text_create(int, int, int, int);
 void text_free(Text *);
+File *text_openfile(Text *, char *, char *);
+Buffer *text_refreshbuf(Text *);
