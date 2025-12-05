@@ -45,7 +45,7 @@ buf_create(unsigned int size)
 }
 
 int
-buf_movebackwards(Buffer *buf, int n)
+buf_movebackwardn(Buffer *buf, int n)
 {
 	int moved;
 
@@ -62,30 +62,7 @@ buf_movebackwards(Buffer *buf, int n)
 }
 
 int
-buf_movecolumn(Buffer *buf, int n)
-{
-	int current;
-
-	current = buf->bog - buf->bob;
-	printf("moving cursor from column %d to %d\n", current, n);
-	printf("buffer len %lld\n", buf->len);
-	if (buf->len < n || n < 0)
-		return current;
-	if (current > n)
-		for (int i = 0; i < current - n; i++) {
-			printf("moving forwards\n");
-			buf_moverunebackwards(buf, 1);
-		}
-	else if (current <= n)
-		for (int i = 0; i < n - current; i++) {
-			printf("moving backward\n");
-			buf_moveruneforward(buf, 1);
-		}
-	return n;
-}
-
-int
-buf_moveforward(Buffer *buf, int n)
+buf_moveforwardn(Buffer *buf, int n)
 {
 	int moved;
 
@@ -102,10 +79,10 @@ buf_moveforward(Buffer *buf, int n)
 }
 
 int
-buf_moverunebackwards(Buffer *buf, int n)
+buf_moverunebackwardn(Buffer *buf, int n)
 {
 	Rune r;
-	unsigned int moved;
+	int moved;
 	int i, runelen;
 
 	moved = 0;
@@ -132,10 +109,10 @@ buf_moverunebackwards(Buffer *buf, int n)
 }
 
 int
-buf_moveruneforward(Buffer *buf, int n)
+buf_moveruneforwardn(Buffer *buf, int n)
 {
 	Rune r;
-	unsigned int moved;
+	int moved;
 	int runelen;
 
 	moved = 0;
@@ -150,6 +127,114 @@ buf_moveruneforward(Buffer *buf, int n)
 		buf->eog += runelen;
 		moved++;
 	}
+	return moved;
+}
+
+int
+buf_moverunebackwardnr(Buffer *buf, int n, Rune until)
+{
+	Rune r;
+	int moved;
+	int i, runelen;
+
+	moved = 0;
+	if (!n)
+		return 0;
+	do {
+		if (buf->bog == buf->bob)
+			return moved;
+		/* find the last rune before the gap */
+		for (i = 0; i < 4; i++) {
+			if (buf->bog - i == buf->bob)
+				return moved;
+			runelen = chartorune(&r, buf->bog - i - 1);
+			if (r == Runeerror)
+				continue;
+			memcpy(buf->eog - runelen + 1, buf->bog - runelen, runelen);
+			buf->bog -= runelen;
+			buf->eog -= runelen;
+			moved++;
+			break;
+		}
+		if (r == Runeerror) /* invalid utf8 codepoint */
+			return moved;
+	} while (moved != n && r != until);
+	return moved;
+}
+
+int
+buf_moveruneforwardnr(Buffer *buf, int n, Rune until)
+{
+	Rune r;
+	int moved;
+	int runelen;
+
+	moved = 0;
+	if (!n)
+		return 0;
+	do {
+		if (buf->eog == buf->eob)
+			return moved;
+		runelen = chartorune(&r, buf->eog + 1);
+		if (r == Runeerror)
+			return moved;
+		memcpy(buf->bog, buf->eog + 1, runelen);
+		buf->bog += runelen;
+		buf->eog += runelen;
+		moved++;
+	} while(moved != n && r != until);
+	return moved;
+}
+
+int
+buf_moverunebackwardr(Buffer *buf, Rune until)
+{
+	Rune r;
+	int moved;
+	int i, runelen;
+
+	moved = 0;
+	do {
+		if (buf->bog == buf->bob)
+			return moved;
+		/* find the last rune before the gap */
+		for (i = 0; i < 4; i++) {
+			if (buf->bog - i == buf->bob)
+				return moved;
+			runelen = chartorune(&r, buf->bog - i - 1);
+			if (r == Runeerror)
+				continue;
+			memcpy(buf->eog - runelen + 1, buf->bog - runelen, runelen);
+			buf->bog -= runelen;
+			buf->eog -= runelen;
+			moved++;
+			break;
+		}
+		if (r == Runeerror) /* invalid utf8 codepoint */
+			return moved;
+	} while (r != until);
+	return moved;
+}
+
+int
+buf_moveruneforwardr(Buffer *buf, Rune until)
+{
+	Rune r;
+	int moved;
+	int runelen;
+
+	moved = 0;
+	do {
+		if (buf->eog == buf->eob)
+			return moved;
+		runelen = chartorune(&r, buf->eog + 1);
+		if (r == Runeerror)
+			return moved;
+		memcpy(buf->bog, buf->eog + 1, runelen);
+		buf->bog += runelen;
+		buf->eog += runelen;
+		moved++;
+	} while(r != until);
 	return moved;
 }
 

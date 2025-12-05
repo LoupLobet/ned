@@ -6,7 +6,7 @@ LDFLAGS=-lncurses
 PROG=ned
 OBJS=\
 	util.o\
-	text.o\
+	buf.o\
 	rune.o\
 	main.o
 

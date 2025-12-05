@@ -14,38 +14,54 @@ screen_create(void)
 	noecho();
 	curs_set(1);
 	keypad(stdscr, TRUE);
-    getmaxyx(stdscr, scrh, scrw);
+  getmaxyx(stdscr, scrh, scrw);
 	if ((scr = malloc(sizeof(Screen))) == nil)
 		return nil;
 	scr->h = scrh;
 	scr->w = scrw;
-	scr->cursy = scr->cursx = 0;
-	scr->buf = nil;
+	scr->text = nil;
+	if ((scr->prompt = text_create(0, 0, scrh, scrw)) == nil) {
+		free(scr);
+		return nil;
+	}
 	return scr;
 }
 
 void
 screen_free(Screen *scr)
 {
-	buf_free(scr->buf);
+	text_free(scr->prompt);
+	text_free(scr->text);
 	free(scr);
 	endwin();
 }
 
-int
-screen_movecurs(Screen *scr, int y, int x)
+Text *
+text_create(int y, int x, int h, int w)
 {
-	return screen_movecursto(scr, scr->cursy + y,  scr->cursx + x);
+	Text *txt;
+
+	if ((txt = malloc(sizeof(Text))) == nil) {
+		return nil;
+	}
+	txt->x = x;
+	txt->y = y;
+	txt->h = h;
+	txt->w = w;
+	txt->cursy = txt->cursx = 0;
+	txt->addrfrom = 0;
+	if ((txt->buf = buf_create(BUFFER_INIT_SIZE)) == nil) {
+		free(txt);
+		return nil;
+	}
+	return txt;
 }
 
-int
-screen_movecursto(Screen *scr, int y, int x)
+void
+text_free(Text *txt)
 {
-	if (0 <= y && y < scr->h)
-		scr->cursy = y;
-	if (0 <= x && x < scr->w)
-		scr->cursx = x;
-	return move(scr->cursy, scr->cursx);
+	buf_free(txt->buf);
+	free(txt);
 }
 
 int
@@ -63,16 +79,16 @@ main(int argc, char *argv[])
 		c = getch();
 		switch (c) {
 		case 'h':
-			screen_movecurs(scr, 0, -1);
+			// screen_movecurs(scr, 0, -1);
 			break;
 		case 'l':
-			screen_movecurs(scr, 0, 1);
+			// screen_movecurs(scr, 0, 1);
 			break;
 		case 'k':
-			screen_movecurs(scr, -1, 0);
+			// screen_movecurs(scr, -1, 0);
 			break;
 		case 'j':
-			screen_movecurs(scr, 1, 0);
+			// screen_movecurs(scr, 1, 0);
 			break;
 		case 'Q':
 			quit = 1;
