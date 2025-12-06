@@ -1,13 +1,18 @@
 CC=cc
 
 CFLAGS=-Wall -pedantic -std=c99
-LDFLAGS=-lncurses
+# OSX
+LNCURSES=-lncurses
+# Linux uncomment
+# LNCURSES=-lncursesw
+LDFLAGS=$(LNCURSES) -lm
 
 PROG=ned
 OBJS=\
 	util.o\
 	buffer.o\
 	rune.o\
+	fns.o\
 	file.o\
 	main.o
 
